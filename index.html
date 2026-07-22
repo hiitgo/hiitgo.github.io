@@ -20,7 +20,6 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   html{transition:background-color .45s ease;}
-  html.lock-scroll{overflow:hidden;}
   body{
     background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -48,7 +47,7 @@
   select.pill option{color:#000;}
 
   /* CONFIG */
-  #setup{display:flex;flex-direction:column;flex:1;justify-content:flex-start;}
+  #setup{display:flex;flex-direction:column;flex:1;justify-content:flex-start;padding-bottom:104px;}
   #setup h1{text-align:center;margin:12px 0 4px;line-height:0;}
   .brand-logo{height:104px;width:auto;max-width:85%;}
   .brand-fallback{font-size:1.6rem;font-weight:900;letter-spacing:-.02em;color:#fff;}
@@ -94,7 +93,8 @@
   .add-name-btn{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);
     color:var(--txt);font-size:.95rem;font-weight:800;cursor:pointer;margin-top:4px;}
   .add-name-btn:active{background:var(--line);}
-  .start-btn{width:100%;padding:20px;border:none;border-radius:18px;cursor:pointer;margin-top:16px;
+  .start-btn{position:fixed;left:16px;right:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:30;
+    padding:20px;border:none;border-radius:18px;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.55);
     background:var(--accent);color:var(--accent-ink);font-size:1.3rem;font-weight:900;}
   .start-btn:active{filter:brightness(.92);}
 
@@ -102,11 +102,11 @@
   #timer{display:none;flex:1;min-height:0;flex-direction:column;align-items:center;}
   #timer.show{display:flex;}
   .phase-label{font-size:1.5rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-top:4px;color:var(--ph-fg,#fff);
-    text-shadow:0 2px 3px rgba(0,0,0,.45),0 0 14px rgba(0,0,0,.28);}
+    text-shadow:0 2px 4px rgba(0,0,0,.4);}
   .round-label{color:var(--ph-fg,#fff);opacity:.82;font-size:1rem;font-weight:800;margin-top:2px;letter-spacing:.04em;text-shadow:0 1px 8px rgba(0,0,0,.3);}
   .exercise-name{display:none;color:var(--ph-fg,#fff);font-size:clamp(1.3rem,6.2vw,2rem);font-weight:800;
     text-align:center;margin-top:8px;padding:0 16px;line-height:1.15;font-weight:900;
-    text-shadow:0 2px 3px rgba(0,0,0,.45),0 0 14px rgba(0,0,0,.28);}
+    text-shadow:0 2px 4px rgba(0,0,0,.4);}
   .exercise-name.show{display:block;}
   .lights{display:flex;gap:10px;margin:10px 0 0;height:18px;}
   .lights .dot{width:18px;height:18px;border-radius:50%;background:rgba(128,128,128,.22);box-shadow:0 2px 5px rgba(0,0,0,.3);
@@ -122,11 +122,11 @@
   .dial{width:min(82vw,440px);height:min(82vw,440px);max-height:42dvh;max-height:42vh;transition:opacity .2s ease;overflow:visible;}
   .dial circle,.dial .prog{fill:none;stroke-width:10;stroke-linecap:round;}
   .dial .track{stroke:var(--ph-track,rgba(255,255,255,.2));}
-  .dial .prog{stroke:var(--ph-fg,#fff);filter:drop-shadow(0 0 7px var(--ph-glow,rgba(255,255,255,.8))) drop-shadow(0 1px 3px rgba(0,0,0,.28));}
+  .dial .prog{stroke:var(--ph-fg,#fff);}
   .big-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:min(34vw,210px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ph-fg,#fff);
-    text-shadow:0 0 18px var(--ph-glow,rgba(255,255,255,.6)),0 2px 5px rgba(0,0,0,.3);}
-  .big-num.word{font-size:min(41vw,252px);font-weight:900;letter-spacing:-.02em;}
+    font-size:min(34vw,19vh,190px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ph-fg,#fff);
+    text-shadow:0 2px 4px rgba(0,0,0,.35);}
+  .big-num.word{font-size:min(40vw,22vh,220px);font-weight:900;letter-spacing:-.02em;}
   .controls{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:auto;padding-top:10px;}
   .ctl-row{display:flex;gap:12px;}
   .ctl-row button{padding:20px;border:none;border-radius:18px;cursor:pointer;font-size:1.15rem;font-weight:800;}
@@ -238,7 +238,7 @@
     <div class="total"><span data-i18n="total"></span> <b id="total-time">–</b></div>
     <button class="start-btn" id="start" data-i18n="start"></button>
     <a class="donate-link hidden" id="donate-setup" target="_blank" rel="noopener"></a>
-    <div class="build-stamp">build 2026-07-20-A</div>
+    <div class="build-stamp">build 2026-07-21-B</div>
   </section>
 
   <!-- TIMER -->
@@ -551,7 +551,10 @@
     document.querySelector(".menu-wrap").classList.toggle("hidden",which!=="setup");
     document.querySelector(".topbar").classList.toggle("hidden",which!=="setup");
     closeMenu();
-    document.documentElement.classList.toggle("lock-scroll",which!=="setup");
+    var isSetup=(which==="setup");
+    document.querySelector(".site").classList.toggle("hidden",!isSetup);
+    document.querySelector(".site-footer").classList.toggle("hidden",!isSetup);
+    if(!isSetup) window.scrollTo(0,0);
     if(which!=="timer"){ bodyEl.style.background=BASE_BG; document.documentElement.style.background=BASE_BG; }
   }
 
