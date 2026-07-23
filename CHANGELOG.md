@@ -113,3 +113,92 @@ espacio que queda libre arriba; no al revés.
    inicio y se agregó como última línea de `.site-footer`, después de
    "HIIT Go!" y de la clave i18n `footerText` (ya traducida en los 11
    idiomas), manteniendo su estilo discreto (`.68rem`, color tenue).
+
+## build 2026-07-21-F
+
+**Principio de esta tanda:** la landing debe tener una composición FIJA
+— los mismos tamaños en píxeles en cualquier navegador. Lo único que
+puede variar entre motores es cuánto scroll queda por debajo, nunca el
+tamaño de los elementos.
+
+**Dos causas de raíz a recordar, porque ya reaparecieron más de una vez:**
+
+- **`height:100%` en `html`/`body` rompe el colapso de la barra de
+  direcciones.** Fija la altura del documento al viewport, lo que rompe
+  el scroll nativo del que depende el navegador para colapsar su barra
+  con swipe up. Es un remanente que sobrevivió sin tocarse desde
+  versiones anteriores a pesar de que el build E ya había resuelto el
+  `dvh`/`svh` de `#app` — arreglar la unidad de altura no sirve de nada
+  si el documento sigue con la altura fijada por otro lado.
+- **Dimensionar elementos de la landing con unidades de viewport (`vh`,
+  `svh`, `dvh`, `vw`, o `clamp()` que las use) produce composiciones
+  distintas en cada navegador**, porque cada uno calcula el viewport
+  distinto (sobre todo con la barra de direcciones visible/oculta). La
+  única unidad de viewport permitida en toda la landing es el
+  `min-height` de `#app`; todo lo demás en `#setup` debe ser `rem`/`px`
+  fijos. (Auditado en este build: `#setup` ya estaba 100% en unidades
+  fijas desde el build E — se deja constancia para que no vuelva a
+  reintroducirse por error en el futuro.)
+
+1. **Barra de direcciones que no colapsaba con swipe up.** Causa: seguía
+   existiendo `html,body{height:100%;}`, remanente no tocado en el build
+   E. Se eliminó. Confirmado: no queda `overflow:hidden` ni
+   `overflow-y:auto` en `html`, `body`, `#app`, `#setup` ni `#timer`
+   — el scroll ocurre en el documento, `document.documentElement.scrollHeight`
+   ya no está pisado por una altura fija (pasó a ser el alto real del
+   contenido). `#app` mantiene `min-height:100vh` seguido de
+   `min-height:100svh`.
+
+2. **Auditoría de unidades de viewport en `#setup`.** Se revisaron los
+   ocho elementos listados (logo, subtítulo, tarjetas, steppers, total,
+   desplegable de nombres, botón GO!): ninguno usaba `vh`/`svh`/`vw` —
+   ya habían quedado en `rem`/`px` fijos en el build E. `--start-btn-reserve`
+   se mantiene en `90px` como única fuente de verdad del
+   `padding-bottom` de `#setup`. Verificado en 360×640: los 4 selectores,
+   el tiempo total y el desplegable de nombres cerrado entran completos,
+   con 31px de margen antes del botón (≥12px pedido).
+
+3. **El botón GO! seguía tapando "How HIIT Go! works" al hacer scroll.**
+   Se reemplazó el listener de `scroll` que comparaba contra el final de
+   `#setup` por un único `IntersectionObserver` sobre `#how` (la primera
+   sección de contenido): aplica `away` apenas `#how` empieza a
+   intersectar el viewport, la quita al dejar de intersectar. Sin
+   umbrales de píxeles fijos, funciona a cualquier alto de pantalla.
+   Verificado: el botón desaparece justo cuando aparece el título
+   "Cómo funciona HIIT Go!", sin superponerse a él, y reaparece al
+   subir.
+
+4. **Números del contador más delgados en Chrome que en Firefox.** La
+   pila de fuentes del sistema mapea 800/900 a archivos distintos según
+   el navegador. Se fijó `font-weight:900` explícito en `.big-num` (antes
+   800) y `.big-num.word`, y se sumó `-webkit-text-stroke:1.5px currentColor`
+   a ambos — contorno del mismo color que el relleno, así engrosa el
+   trazo sin ensuciarlo (a diferencia del contorno oscuro que se probó en
+   los títulos de fase y no quedó bien). No se aplicó a ningún otro
+   texto.
+
+5. **Semáforo a distancia variable del anillo según hubiera o no nombre
+   de ejercicio.** `.lights` vivía dentro de `.timer-head`
+   (`flex:1;justify-content:center`), así que su posición dependía de
+   cuánto texto hubiera arriba. Se sacó `.lights` de `.timer-head`: ahora
+   `.timer-head` centra solo los tres textos (`flex:1`), `.lights` es
+   hermano con `flex:0 0 auto` y margen inferior fijo de 16px, y
+   `.dial-wrap`/`.controls` pasaron a `flex:0 0 auto` (ya no compiten por
+   el espacio libre). Como `.timer-head` es el único elemento con
+   `flex-grow`, absorbe todo el espacio sobrante y el resto del bloque
+   (semáforo, anillo, controles) queda con tamaño fijo, ajeno al
+   contenido del encabezado. Verificado con y sin nombre de ejercicio:
+   `#lights` y `.dial` quedan exactamente en el mismo `getBoundingClientRect()`
+   en ambos casos (gap semáforo→anillo: 16px exactos, sin variación).
+
+6. **Franja inferior (safe-area) cambiaba de color con retraso.**
+   `applyPhaseStyle()` pinta tanto `body` como `html`, pero ambos tenían
+   su propia transición de `.45s`, sin sincronizar. Se quitó la
+   transición de `html` (cambia de inmediato) y se dejó solo en `body`
+   — como `body` tapa casi toda la superficie, el único lugar donde se
+   nota es esa franja, que ahora cambia junto con el resto.
+
+7. **Títulos de fase.** Sin cambios de tamaño/peso (2.4rem / .08em, ya
+   quedaron bien en el build E). Verificado tras el cambio del punto 5:
+   siguen centrados horizontalmente y "GET READY"/"PREPARACIÓN" no se
+   cortan en 360px de ancho.

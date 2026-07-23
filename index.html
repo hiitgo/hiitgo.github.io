@@ -19,8 +19,6 @@
     --start-btn-reserve:90px; /* altura real del .start-btn fijo + su bottom + un respiro; único lugar donde se define */
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
-  html{transition:background-color .45s ease;}
   body{
     background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -112,7 +110,7 @@
     text-align:center;margin-top:8px;padding:0 16px;line-height:1.15;font-weight:900;
     text-shadow:0 2px 4px rgba(0,0,0,.4);}
   .exercise-name.show{display:block;}
-  .lights{display:flex;gap:10px;margin:10px 0 16px;height:18px;}
+  .lights{flex:0 0 auto;display:flex;gap:10px;margin:10px 0 16px;height:18px;}
   .lights .dot{width:18px;height:18px;border-radius:50%;background:rgba(128,128,128,.22);box-shadow:0 2px 5px rgba(0,0,0,.3);
     border:1px solid var(--ph-track,rgba(255,255,255,.28));transition:background .12s,box-shadow .12s,transform .12s;}
   .lights .dot.on{transform:scale(1.12);}
@@ -122,16 +120,16 @@
   [data-phase="work"] .lights .dot:nth-child(1).on,[data-phase="work"] .lights .dot:nth-child(2).on,[data-phase="work"] .lights .dot:nth-child(3).on,[data-phase="work"] .lights .dot:nth-child(4).on{background:#ffd23b;box-shadow:0 2px 5px rgba(0,0,0,.3),0 0 16px #ffd23b;border-color:#ffd23b;}
   [data-phase="work"] .lights .dot:nth-child(5).on{background:#ff4242;box-shadow:0 2px 5px rgba(0,0,0,.3),0 0 16px #ff4242;border-color:#ff4242;}
   [data-phase="work"] .round-label{color:#10190a;text-shadow:none;}
-  .dial-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%;position:relative;}
+  .dial-wrap{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:100%;position:relative;}
   .dial{width:min(82vw,440px);height:min(82vw,440px);max-height:42vh;max-height:42svh;overflow:visible;}
   .dial circle,.dial .prog{fill:none;stroke-width:10;stroke-linecap:round;}
   .dial .track{stroke:var(--ph-track,rgba(255,255,255,.2));}
   .dial .prog{stroke:var(--ph-fg,#fff);}
   .big-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:min(44vw,26vh,240px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ph-fg,#fff);
-    text-shadow:0 2px 4px rgba(0,0,0,.35);}
-  .big-num.word{font-size:min(48vw,26vh,400px);font-weight:900;letter-spacing:-.02em;}
-  .controls{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:auto;padding-top:10px;}
+    font-size:min(44vw,26vh,240px);font-weight:900;letter-spacing:-.04em;line-height:1;color:var(--ph-fg,#fff);
+    text-shadow:0 2px 4px rgba(0,0,0,.35);-webkit-text-stroke:1.5px currentColor;}
+  .big-num.word{font-size:min(48vw,26vh,400px);font-weight:900;letter-spacing:-.02em;-webkit-text-stroke:1.5px currentColor;}
+  .controls{flex:0 0 auto;display:flex;flex-direction:column;gap:12px;width:100%;padding-top:10px;}
   .ctl-row{display:flex;gap:12px;}
   .ctl-row button{padding:20px;border:none;border-radius:18px;cursor:pointer;font-size:1.15rem;font-weight:800;}
   .btn-main{flex:1;background:var(--ph-fg,#fff);color:var(--ph-btn-ink,#0a0e14);}
@@ -251,8 +249,8 @@
       <div class="phase-label" id="phase-label"></div>
       <div class="round-label" id="round-label">&nbsp;</div>
       <div class="exercise-name" id="exercise-name"></div>
-      <div class="lights" id="lights"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
     </div>
+    <div class="lights" id="lights"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
     <div class="dial-wrap">
       <svg class="dial" viewBox="0 0 200 200">
         <circle class="track" cx="100" cy="100" r="92"></circle>
@@ -335,7 +333,7 @@
 <footer class="site-footer">
   <div>HIIT Go!</div>
   <div data-i18n="footerText"></div>
-  <div class="build-stamp">build 2026-07-21-E</div>
+  <div class="build-stamp">build 2026-07-21-F</div>
 </footer>
 
 <script>
@@ -563,15 +561,6 @@
     document.querySelector(".site-footer").classList.toggle("hidden",!isSetup);
     if(!isSetup) window.scrollTo(0,0);
     if(which!=="timer"){ bodyEl.style.background=BASE_BG; document.documentElement.style.background=BASE_BG; }
-    updateStartBtnVisibility();
-  }
-
-  // El botón GO! fijo se oculta cuando #setup ya salió por completo de la
-  // vista (scroll hacia el contenido de abajo), para no tapar ese texto.
-  function updateStartBtnVisibility(){
-    if(setupEl.classList.contains("hidden")) return;
-    var pastSetup = setupEl.getBoundingClientRect().bottom <= 0;
-    startBtn.classList.toggle("away", pastSetup);
   }
 
   function totalSeconds(){
@@ -673,8 +662,14 @@
       var inputs=document.querySelectorAll(".name-input");
       var last=inputs[inputs.length-1]; if(last) last.focus();
     });
-    window.addEventListener("scroll",updateStartBtnVisibility,{passive:true});
-    window.addEventListener("resize",updateStartBtnVisibility);
+    // El botón GO! fijo se oculta apenas #how (la primera sección de
+    // contenido) empieza a entrar en el viewport, para no taparla al leer.
+    var howEl=$("#how");
+    if(howEl && "IntersectionObserver" in window){
+      new IntersectionObserver(function(entries){
+        startBtn.classList.toggle("away",entries[0].isIntersecting);
+      }).observe(howEl);
+    }
   }
   init();
 })();
