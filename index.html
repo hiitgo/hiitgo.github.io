@@ -19,6 +19,7 @@
     --start-btn-reserve:90px; /* altura real del .start-btn fijo + su bottom + un respiro; único lugar donde se define */
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   body{
     background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -333,7 +334,7 @@
 <footer class="site-footer">
   <div>HIIT Go!</div>
   <div data-i18n="footerText"></div>
-  <div class="build-stamp">build 2026-07-21-F</div>
+  <div class="build-stamp">build 2026-07-21-G</div>
 </footer>
 
 <script>
@@ -561,6 +562,17 @@
     document.querySelector(".site-footer").classList.toggle("hidden",!isSetup);
     if(!isSetup) window.scrollTo(0,0);
     if(which!=="timer"){ bodyEl.style.background=BASE_BG; document.documentElement.style.background=BASE_BG; }
+    updateStartBtnVisibility();
+  }
+
+  // El botón GO! fijo se oculta cuando #setup ya salió por completo de la
+  // vista (scroll hacia el contenido de abajo), para no tapar ese texto.
+  // No reaparece hasta volver a subir (a diferencia de un IntersectionObserver
+  // sobre una sola sección, que se "reactiva" al pasar de largo esa sección).
+  function updateStartBtnVisibility(){
+    if(setupEl.classList.contains("hidden")) return;
+    var pastSetup = setupEl.getBoundingClientRect().bottom <= 0;
+    startBtn.classList.toggle("away", pastSetup);
   }
 
   function totalSeconds(){
@@ -662,14 +674,8 @@
       var inputs=document.querySelectorAll(".name-input");
       var last=inputs[inputs.length-1]; if(last) last.focus();
     });
-    // El botón GO! fijo se oculta apenas #how (la primera sección de
-    // contenido) empieza a entrar en el viewport, para no taparla al leer.
-    var howEl=$("#how");
-    if(howEl && "IntersectionObserver" in window){
-      new IntersectionObserver(function(entries){
-        startBtn.classList.toggle("away",entries[0].isIntersecting);
-      }).observe(howEl);
-    }
+    window.addEventListener("scroll",updateStartBtnVisibility,{passive:true});
+    window.addEventListener("resize",updateStartBtnVisibility);
   }
   init();
 })();

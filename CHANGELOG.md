@@ -202,3 +202,47 @@ tamaño de los elementos.
    quedaron bien en el build E). Verificado tras el cambio del punto 5:
    siguen centrados horizontalmente y "GET READY"/"PREPARACIÓN" no se
    cortan en 360px de ancho.
+
+## build 2026-07-21-G
+
+1. **El `IntersectionObserver` del build F tenía un error de lógica: el
+   botón GO! reaparecía al seguir bajando.** Un observer sobre una sola
+   sección (`#how`) solo sabe si ESA sección intersecta; al pasarla de
+   largo hacia `#features`/`#benefits`/etc., `#how` deja de intersectar
+   y el botón vuelve a mostrarse justo donde más estorba. Se revirtió al
+   listener de `scroll` del build E (`setupEl.getBoundingClientRect().bottom<=0`),
+   que compara contra el final de `#setup` — una vez pasado ese punto no
+   hay vuelta atrás hasta hacer scroll hacia arriba. Se eliminó el
+   `IntersectionObserver` para no dejar dos mecanismos compitiendo.
+   Verificado: el botón se oculta al pasar `#setup`, sigue oculto en
+   Beneficios/FAQ (scrollY 2500+), y reaparece al volver a scrollY 0.
+
+2. **Nueva auditoría de unidades de viewport en `#setup`, punto por
+   punto.** Se revisaron otra vez los ocho elementos (logo, subtítulo,
+   tarjetas, steppers, total, desplegable, botón GO!): ninguno usa
+   `vh`/`svh`/`dvh`/`vw` ni `clamp()` que las use — ya estaban en
+   `rem`/`px` fijos desde el build E, y así se mantienen. La única
+   excepción sigue siendo el `min-height` de `#app`.
+
+   Como esto no explicaba por sí solo la queja de "se ve distinta según
+   el navegador", se identificó una segunda causa real y no relacionada
+   con `vh`: el "font boosting" automático de Chrome (`text-size-adjust`),
+   que reescala el texto en columnas angostas de forma heurística e
+   inconsistente con otros navegadores aun con CSS 100% en unidades
+   fijas. Se agregó `text-size-adjust:100%` (con prefijo `-webkit-`) en
+   `html` para desactivarlo.
+
+   Medido en 360×640 y 412×915 con el desplegable cerrado y sin nombres
+   de ronda: en ambos casos entran completos —botones superiores, logo,
+   subtítulo, 4 tarjetas, tiempo total, desplegable cerrado y botón GO!—
+   sin scroll, con 31px de margen en 360×640 y 332px en 412×915 (ambos
+   ≥12px). No hizo falta achicar ningún elemento: el ancho/alto extra de
+   412×915 da más aire, no menos, así que si 360×640 entra, 412×915
+   entra con más margen todavía.
+
+   Nota de proceso: el "gap" negativo visto a mitad de esta iteración
+   (-121px) no era una regresión de layout — era estado de pruebas
+   anteriores (un nombre de ronda cargado y el desplegable abierto)
+   todavía presente en la página al medir. Con el desplegable cerrado y
+   sin nombres, que es el estado real de una visita nueva, el margen es
+   el de arriba.
